@@ -1,0 +1,10 @@
+# depslib dependency file v1.0
+1491503574 source:/home/partha/Myworks/L-3T-2/CSE 322/testNet/main.cpp
+	<cstdio>
+	<iostream>
+	<arpa/inet.h>
+	<sys/socket.h>
+	<string.h>
+	<unistd.h>
+	<inttypes.h>
+
