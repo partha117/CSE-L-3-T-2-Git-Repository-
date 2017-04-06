@@ -4,6 +4,12 @@
 #include<unistd.h>
 #include<semaphore.h>
 #include"ArrayList.c"
+typedef struct abc password;
+struct abc
+{   int id;
+    int pass;
+};
+
 sem_t applicationFull,applicationEmpty,teacherBQueueStudent,teacherBQueueTeacher,teacherD,checkDone,onAvailable;
 pthread_mutex_t teacherInsertLock,fullLock;
 pthread_mutex_t queueLock,checkingPassword;
@@ -14,10 +20,10 @@ int full=0;
 int empty=1;
 int currentPos=0;
 int teacherBQueue;
-int approvedPassword[50];
+password approvedPassword[50];
 int currnetPassword=0;
 int fillId;
-int GivenPassword;
+password GivenPassword;
 void initializeQueue()
 {
     int i;
@@ -130,7 +136,7 @@ int queueOperation(int code,int val)
 //Queue contents end
 void * studentTask(void * arg)
 {
-   // printf("student %d  starting\n",*((int *)arg));
+    //printf("student %d  starting\n",*((int *)arg));
     int checker=0;
     int c=*((int *)arg);
     for(;checker!=1;)
@@ -166,7 +172,7 @@ void * studentTask(void * arg)
         fillId=c;
         sem_post(&teacherD);
         sem_wait(&checkDone);
-        if(GivenPassword==c)
+        if(GivenPassword.id==c)
         {
             printf("->->->-Task Complete  Student %d<-<-<-\n",c);
             pthread_mutex_unlock(&checkingPassword) ;
@@ -195,7 +201,7 @@ void * teacherTask(void *arg)
             insertItem(temp);
            // printf("%s got %d\n",(char*)arg,temp);
             sem_post(&onAvailable);
-            printQueue();
+           // printQueue();
             pthread_mutex_unlock(&teacherInsertLock);
             sleep(1);
         }
@@ -203,37 +209,7 @@ void * teacherTask(void *arg)
     }
 
 }
-/*int isDuplicate(int a)
-{
-    pthread_mutex_lock(&queueLock);
 
-    int val=hasDuplicate(a);
-    if(val==0)
-    {
-        int i;
-        for(i=0;i<10;i++)
-        {
-            if(applicationQueue[i]==a)
-            {
-
-                pthread_mutex_unlock(&queueLock);
-                printf("checking for %d returning 1\n",a);
-                return 1;
-            }
-        }
-
-        pthread_mutex_unlock(&queueLock);
-        printf("checking for %d returning 0\n",a);
-        return 0;
-    }
-    else
-    {
-
-        pthread_mutex_unlock(&queueLock);
-        printf("checking for %d returning 2\n",a);
-        return 1;
-    }
-}*/
 void *teacherBTask(void *arg)
 {
     for(;1;)
@@ -241,7 +217,7 @@ void *teacherBTask(void *arg)
         sem_wait(&teacherBQueueTeacher);
         int temp=teacherBQueue;
         int val=0;
-        printf("Teacher B got %d >>>>>>>>>>\n",temp);
+       // printf("Teacher B got %d >>>>>>>>>>\n",temp);
         for(;1;)
         {
             pthread_mutex_lock(&teacherInsertLock);
@@ -255,11 +231,14 @@ void *teacherBTask(void *arg)
             }
             else if(val==1)
             {
-                approvedPassword[currnetPassword]=temp;
+                int temp2;
+                approvedPassword[currnetPassword].id=temp;
+                approvedPassword[currnetPassword].pass=temp2;
+               // approvedPassword[currnetPassword].password=(char)(temp);
                 currnetPassword++;
                 deleteItem(temp);
                 //printf("Its %d \n",temp);
-               // printList();
+                printList();
                 pthread_mutex_unlock(&teacherInsertLock);
                 break;
             }
@@ -284,13 +263,15 @@ void *teacherDTask(void *arg)
     for(;1;)
     {
         sem_wait(&teacherD);
-        GivenPassword=-1;
+        GivenPassword.id=-1;
         //printList();
+        printf("Pinged by %d\n",fillId);
         for(i=0;i<currnetPassword;i++)
         {
-            if(approvedPassword[i]==fillId)
+            if(approvedPassword[i].id==fillId)
             {
-                GivenPassword=fillId;
+                GivenPassword.id=fillId;
+                GivenPassword.pass=approvedPassword[i].pass;
             }
            // printf("request: %d got:%d",fillId,approvedPassword[i]);
         }
@@ -316,10 +297,8 @@ int main()
     pthread_mutex_init(&checkingPassword, NULL);
     pthread_mutex_init(&queueLock, NULL);
     pthread_mutex_init(&fullLock, NULL);
-    pthread_t studentThread[30];
-    int studentId[30];
-    pthread_t duplicatStudentThread[10];
-    int duplicatStudentId[10];
+    pthread_t studentThread[40];
+    int studentId[40];
     pthread_t teacherA;
     pthread_t teacherC;
     pthread_t teacherE;
@@ -330,17 +309,17 @@ int main()
     char * messageE="Teacher E";
     char * messageB="Teacher B";
     char * messageD="Teacher D";
-    for(i=0;i<30;i++)
+    for(i=0;i<40;i++)
     {
-        if(i==11)
+        if(i==11)//not 12
         {
             studentId[i]=i;
         }
-        else if(i==13)
+        else if(i==13)//not 14
         {
             studentId[i]=i;
         }
-        else if(i==15)
+        else if(i==15)//not 16
         {
            studentId[i]=i;
         }
@@ -348,6 +327,7 @@ int main()
         {
             studentId[i]=i+1;
         }
+       // studentId[i]=(i);
 
         pthread_create(&studentThread[i],NULL,studentTask,(void*)(&studentId[i]));
 
