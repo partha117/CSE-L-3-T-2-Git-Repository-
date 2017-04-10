@@ -148,12 +148,12 @@ public:
     {
         //////printf("in insert %d %d %d\n",strlen(a),strlen(b),c);
         ////printf("length %d\n",length);
-        tableEntry[length].destination=(char*)malloc((sizeof(char))*ip_length);
-        tableEntry[length].next_hop=(char*)malloc((sizeof(char))*ip_length);
+        tableEntry[length].destination=(char*)malloc((sizeof(char))*strlen(a));
+        tableEntry[length].next_hop=(char*)malloc((sizeof(char))*strlen(b));
         strcpy(tableEntry[length].destination,a);
-        ////printf("%s %s\n",a,tableEntry[length].destination);
+       // printf("%s %s\n",a,tableEntry[length].destination);
         strcpy(tableEntry[length].next_hop,b);
-        ////printf("%s %s\n",b,tableEntry[length].next_hop);
+        //printf("%s %s\n",b,tableEntry[length].next_hop);
         tableEntry[length].cost=c;
         //printf("%d %d\n",c,tableEntry[length].cost);
         length++;

@@ -30,41 +30,41 @@ void loader(char* ipAddress,char *fileName)
         {
             routerTable.insertEntry(b,b,c);
             savedCopy.insertEntry(b,b,c);
-            lastseen.insertEntry(b,link_down);
+            lastseen.insertEntry(b,0);
         }
         else if(strcmp(b,ipAddress)==0)
         {
             routerTable.insertEntry(a,a,c);
             savedCopy.insertEntry(a,a,c);
-            lastseen.insertEntry(a,link_down);
+            lastseen.insertEntry(a,0);
         }
 
 
     }
     topo.close();
-//    topo.open(fileName);
-//    while(topo>>a>>b>>c)
-//    {
-//       // cout<<"ip1 :"<<a<<"   ip2 :"<<b<<"   cost :"<<c<<endl;
-//
-//
-//
-//
-//            if(!routerTable.isAvailable(a))
-//            {
-//                routerTable.insertEntry(a,UNDEFINED,INFINITY);
-//                savedCopy.insertEntry(a,UNDEFINED,INFINITY);
-//                lastseen.insertEntry(a,link_down);
-//
-//            }
-//            if(!routerTable.isAvailable(b))
-//            {
-//                routerTable.insertEntry(b,UNDEFINED,INFINITY);
-//                savedCopy.insertEntry(b,UNDEFINED,INFINITY);
-//                lastseen.insertEntry(b,link_down);
-//
-//            }
-//    }
+    topo.open(fileName);
+    while(topo>>a>>b>>c)
+    {
+       // cout<<"ip1 :"<<a<<"   ip2 :"<<b<<"   cost :"<<c<<endl;
+
+
+
+
+            if(!routerTable.isAvailable(a))
+            {
+                routerTable.insertEntry(a,UNDEFINED,INFINITY);
+                savedCopy.insertEntry(a,UNDEFINED,INFINITY);
+                lastseen.insertEntry(a,link_down);
+
+            }
+            if(!routerTable.isAvailable(b))
+            {
+                routerTable.insertEntry(b,UNDEFINED,INFINITY);
+                savedCopy.insertEntry(b,UNDEFINED,INFINITY);
+                lastseen.insertEntry(b,link_down);
+
+            }
+    }
 
 
 
@@ -82,16 +82,17 @@ void sendTable()
 {
     entry * allEntry=savedCopy.getTable();
     char *table_as_string=routerTable.getasString();
-    for(int i=0;i<routerTable.getLength();i++)
+
+    for(int i=0;i<savedCopy.getLength();i++)
     {
         if((strcmp(allEntry[i].destination,allEntry[i].next_hop)==0)&&(strcmp(allEntry[i].destination,myIPAddress)!=0))
         {
-            printf("It is %s send table to: %s\n",myIPAddress,allEntry[i].destination);
+          //  printf("It is %s send table to: %s\n",myIPAddress,allEntry[i].destination);
             nc.write(allEntry[i].destination,table_as_string);
 
         }
     }
-    //printf("out\n");
+   // printf("out\n");
 }
 void parser(char *message,int bytes)
 {
@@ -130,7 +131,9 @@ void parser(char *message,int bytes)
             inet_ntop(AF_INET,temp,ip1,sizeof(ip1));
             if(strcmp(ip1,myIPAddress)==0)
             {
+                printf("-----------------Ip Table of %s-----------------\n",myIPAddress);
                 routerTable.printTable();
+                printf("-----------------++++++++++++++------------------------\n");
             }
 
         }
@@ -172,6 +175,26 @@ void parser(char *message,int bytes)
             messageToPass[j]=0;
 
 
+            if(strcmp(ip2,myIPAddress)==0)
+            {
+                printf("Packet Reached Destination(printed by %s)\n",myIPAddress);
+
+            }
+            else
+            {
+             entry *all=routerTable.getTable();
+                for(i=0;i<routerTable.getLength();i++)
+                {
+                    if(strcmp(all[i].destination,ip2)==0)
+                    {
+                        nc.write(all[i].next_hop,message);
+                        printf("Packet Forwraded To %s (printed by %s)\n",all[i].next_hop,myIPAddress);
+                    }
+                }
+
+            }
+
+
 
             //printf("message %s\n",message);
         }
@@ -179,19 +202,43 @@ void parser(char *message,int bytes)
         {
             commandType=3;
             currentClock++;
-            printf("Now Clock: %s\n",message);
+           // printf("Now Clock: %s\n",message);
             seenEntry * all=lastseen.getAll();
             for(int k=0;k<lastseen.getLength();k++)
             {
                 if((all[k].lastSeen<=currentClock-down)&&(all[k].lastSeen!=link_down))
                 {
-                    printf("%s link down\n",all[k].ip);
+                    printf("-------%s link down----------\n",all[k].ip);
                     routerTable.setCost(all[k].ip,INFINITY);
-                    printf("<<<<<<<<<<<<<<<<<<<<<<From Link Down\n");
-                    routerTable.printTable();
                     all[k].lastSeen=link_down;
+                   // printf("<<<<<<<<<<<<<<<<<<<<<<From Link Down\n");
+                   // routerTable.printTable();
+
+                   entry* check=routerTable.getTable();
+                   entry *sc=savedCopy.getTable();
+                   for(i=0;i<routerTable.getLength();i++)
+                   {
+                        if(strcmp(check[i].next_hop,all[k].ip)==0)
+                        {
+
+                            check[i].setCost(INFINITY);
+
+                            for(j=0;j<savedCopy.getLength();j++)
+                            {
+                                if((strcmp(check[i].destination,sc[j].destination)==0)&&(lastseen.getLastSeen(sc[j].next_hop)!=link_down))
+                                {
+                                    strcpy(check[i].next_hop,sc[j].next_hop);
+                                    check[i].setCost(sc[j].cost);
+                                }
+
+                            }
+                            routerTable.printTable();
+                        }
+                   }
+
                 }
             }
+
             sendTable();
 
         }
@@ -222,67 +269,129 @@ void parser(char *message,int bytes)
 
             int cost=(message[13]<<8)|(message[12]);
 
+           // printf("Before Updating r\n");
+           // routerTable.printTable();
+           // printf("Before Updating s\n");
+           // savedCopy.printTable();
 
-            if(strcmp(ip1,myIPAddress)==0)
-            {
+
+
+
                 entry* allEntry=routerTable.getTable();
                // printf("Before %s\n",routerTable.getasString());
                 for(i=0;i<routerTable.getLength();i++)
                 {
-                    if(strcmp(allEntry[i].destination,ip2)==0)
+
+                    if(
+                          ((strcmp(allEntry[i].destination,ip2)==0)&&(strcmp(allEntry[i].next_hop,ip2)==0)&&(strcmp(ip2,myIPAddress)!=0))||
+                          ((strcmp(allEntry[i].destination,ip1)==0)&&(strcmp(allEntry[i].next_hop,ip1)==0)&&(strcmp(ip1,myIPAddress)!=0))
+                       )
                     {
                         allEntry[i].setCost(cost);
+                       // printf("After Updating r\n");
+                       // routerTable.printTable();
                        // printf("After %s\n",routerTable.getasString());
-                        return;
+
                     }
                 }
-            }
+                entry* savedEntry=savedCopy.getTable();
+               // printf("Before %s\n",routerTable.getasString());
+                for(i=0;i<savedCopy.getLength();i++)
+                {
+
+                    if(
+                          ((strcmp(savedEntry[i].destination,ip2)==0)&&(strcmp(savedEntry[i].next_hop,ip2)==0)&&(strcmp(ip2,myIPAddress)!=0))||
+                          ((strcmp(savedEntry[i].destination,ip1)==0)&&(strcmp(savedEntry[i].next_hop,ip1)==0)&&(strcmp(ip1,myIPAddress)!=0))
+                       )
+                    {
+                        savedEntry[i].setCost(cost);
+                       // printf("After Updating 2\n");
+                        //savedCopy.printTable();
+                       // printf("After %s\n",routerTable.getasString());
+
+                    }
+                }
+
 
         }
         else
         {
             table received_table(message);
-            printf("it is %s received Table from :%s\n",myIPAddress,nc.readFrom());
+           // printf("it is %s received Table from :%s\n",myIPAddress,nc.readFrom());
             entry *mentry=routerTable.getTable();
             entry *rentry=received_table.getTable();
             int hereCost=0;
             char *hereNextHop;
+
             for(int i=0;i<routerTable.getLength();i++)
             {
 
                     if(strcmp(mentry[i].destination,nc.readFrom())==0)
                     {
-                        hereCost=mentry[i].cost;
                         hereNextHop=mentry[i].next_hop;
+                        hereCost=mentry[i].cost;
+                        break;
                     }
 
             }
+          //  printf("cost:%d hop:%s\n",hereCost,hereNextHop);
+//            for(int i=0;i<received_table.getLength();i++)
+//            {
+//                if(!routerTable.isAvailable(rentry[i].destination))
+//                {
+//                    routerTable.insertEntry(rentry[i].destination,hereNextHop,hereCost+rentry[i].cost);
+//                }
+//            }
 
             for(int j=0;j<received_table.getLength();j++)
             {
                 for(int i=0;i<routerTable.getLength();i++)
                 {
-                    if((strcmp(mentry[i].destination,rentry[j].destination)==0)&&(mentry[i].cost>rentry[j].cost+hereCost)&&(strcmp(rentry[j].next_hop,myIPAddress)!=0))
+
+                    int s=(strcmp(mentry[i].destination,rentry[j].destination)==0);
+                    int c=(mentry[i].cost>rentry[j].cost+hereCost);
+                    int split=(strcmp(rentry[j].next_hop,myIPAddress)!=0);
+                    int fUpdate=(strcmp(mentry[i].next_hop,nc.readFrom())==0);
+                    if(s)
+                    {
+                       // printf("s:%d c:%d split:%d fUpdate:%d mentry :%s rentry:%s\n",s,c,split,fUpdate,mentry[i].destination,rentry[j].destination);
+                    }
+
+
+
+
+                   // if((strcmp(mentry[i].destination,rentry[j].destination)==0)&&(mentry[i].cost>rentry[j].cost+hereCost)&&(strcmp(rentry[j].next_hop,myIPAddress)!=0))
+                    if(s&&((c&&split)||fUpdate))
                     {
 
-                        printf("++++++++++ip %s\n",myIPAddress);
-                        routerTable.printTable();
-                        printf("here cost %d\n",hereCost);
-                        printf("++++++++++ip %s\n",nc.readFrom());
-                        received_table.printTable();
+                       // printf("++++++++++ip %s\n",myIPAddress);
+                       // routerTable.printTable();
+                       // printf("here cost %d\n",hereCost);
+                      //  printf("++++++++++ip %s\n",nc.readFrom());
+                       // received_table.printTable();
                         strcpy(mentry[i].next_hop,hereNextHop);
-                        printf("Next hop:%s \n",mentry[i].next_hop);
-                        mentry[i].cost=rentry[j].cost+hereCost;
+                       // printf("Next hop:%s \n",mentry[i].next_hop);
+                        if(rentry[j].cost==INFINITY)
+                        {
+                            mentry[i].setCost(rentry[j].cost);
+                        }
+                        else
+                        {
+                            mentry[i].setCost(rentry[j].cost+hereCost);
+                        }
+
+
                     }
+
 
                 }
             }
-            printf("------------------------Start Now Router Table---------------------\n");
-            routerTable.printTable();
-            printf("------------------------End  Now Router Table---------------------\n");
+          //  printf("------------------------Start Now Router Table---------------------\n");
+         //   routerTable.printTable();
+         //   printf("------------------------End  Now Router Table---------------------\n");
             if(lastseen.getLastSeen(nc.readFrom())==link_down)
             {
-                printf("%s link up\n",nc.readFrom());
+                printf("+++++++++++%s link up++++++++++\n",nc.readFrom());
                 int temp=savedCopy.getCost(nc.readFrom());
                 if(routerTable.getCost(nc.readFrom())>temp)
                 {
