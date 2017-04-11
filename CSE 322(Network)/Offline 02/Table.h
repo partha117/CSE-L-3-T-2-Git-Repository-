@@ -122,6 +122,18 @@ public:
             }
         }
     }
+    void setInfinity(char *destination)
+    {
+        for(int i=0;i<length;i++)
+        {
+            if(strcmp(tableEntry[i].next_hop,destination)==0)
+            {
+                tableEntry[i].setCost(INFINITY);
+                strcpy(tableEntry[i].next_hop,UNDEFINED);
+               // printf("It is %s",tableEntry[i].next_hop);
+            }
+        }
+    }
     entry getEntry(char *destination)
     {
         entry Entry;
