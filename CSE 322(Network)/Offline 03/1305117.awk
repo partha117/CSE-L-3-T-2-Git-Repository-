@@ -58,11 +58,14 @@ BEGIN {
 		energy_consumption[node] = (idle_energy_consumption + sleep_energy_consumption + transmit_energy_consumption + receive_energy_consumption);
 	}
 
+	if( trmp>=0 && temp <=25 && energy == "[energy" && strEvent == "D") {
+		temp+=1;
+	}
 	# =======================================================
 	# High low packet
 	#========================================================
 
-#	if (strType == "cbr") {
+#	if ( strAgt == "AGT"   && strType == "cbr") {
 		if (idPacket > idHighestPacket) idHighestPacket = idPacket;
 		if (idPacket < idLowestPacket) idLowestPacket = idPacket;
 #		}
@@ -115,8 +118,7 @@ BEGIN {
 	# =======================================================
 	# Drop packet calculation
 	#========================================================
-#	if( strEvent == "D"   &&   strType == "cbr" )
-	if( strEvent == "D" )
+	if( strEvent == "D"   &&   strType == "cbr" )
 	{
 		nDropPackets += 1;
 	}
@@ -206,19 +208,19 @@ END {
 	for (i=0; i<max_pckt; i++) {
 		total_retransmit += retransmit[i] ;		
 	}
-	printf("Total drop : %d\n",nDropPackets);
-	printf("Total sent : %d\n",nSentPackets);
-	printf("Total received : %d\n",nReceivedPackets);
-	printf("Total time : %d\n",rTime);
-	printf("Throughput : %lf\n",rThroughput);
-	printf("Packet delivery ratio : %f\n",rPacketDeliveryRatio);
-	printf("Packet drop ratio : %f\n",rPacketDropRatio);
-	printf("Total energy consumption : %f\n",total_energy_consumption);
-	printf("Average delay : %f\n",rAverageDelay);
-	printf("Average energy per byte : %f\n",avg_energy_per_byte);
-	printf("Average energy per bit : %f\n",avg_energy_per_bit);
-	printf("energy Efficiency : %f\n",rEnergyEfficeincy);
-	printf("Total retransmit : %d\n",total_retransmit);
+	#printf("Total drop : %d\n",nDropPackets);
+	#printf("Total sent : %d\n",nSentPackets);
+	#printf("Total received : %d\n",nReceivedPackets);
+	printf("%lf\n",rThroughput);
+	printf("%d\n",rTotalDelay);
+	printf("%f\n",rPacketDeliveryRatio);
+	printf("%f\n",rPacketDropRatio);
+	printf("%f\n",total_energy_consumption);
+	#printf("Average delay : %f\n",rAverageDelay);
+	#printf("Average energy per byte : %f\n",avg_energy_per_byte);
+	#printf("Average energy per bit : %f\n",avg_energy_per_bit);
+	#printf("energy Efficiency : %f\n",rEnergyEfficeincy);
+	#printf("Total retransmit : %d\n",total_retransmit);
 
 
 

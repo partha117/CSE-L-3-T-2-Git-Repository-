@@ -14,14 +14,15 @@ set val(x)              600
 set val(y)              600
 set val(row)             0
 set val(col)             0
-set val(nn)              20
-set val(flow)            30
+set val(nn)              [lindex $argv 0]
+set val(flow)            [lindex $argv 1]
 set grid                 1
 set val(ttime)           100
 set val(extraTime)       10
-set val(velocity)         5
-
-
+set val(velocity)        [lindex $argv 2]
+set val(pps)             [lindex $argv 3]
+set val(packetSize)      128
+set val(rate)             0
 # ==========================================================================
 # Mac settings
 # =========================================================================
@@ -58,6 +59,8 @@ set val(transitiontime_11) 2.36     ;#LEAP (802.11g)
 # =============================================================================
 #  Global Variables
 # =============================================================================
+#remove-all-packet-headers  
+#add-packet-header IP Message  
 set ns_         [new Simulator]
 set tracefd     [open 1305117_802_15.tr w]
 $ns_ trace-all $tracefd
@@ -143,7 +146,7 @@ for {set i 0} {$i < $val(row) } { incr i } {
 
 for {set i 0} {$i < $val(nn)} {incr i} {
   $ns_ at 0.0 "$node_($i) label AP$i"
-  puts "Labeling node $i"            ;
+  #puts "Labeling node $i"            ;
 }
 
 for {set i 0} {$i < $val(nn) } { incr i } {
@@ -161,9 +164,17 @@ for {set i 0} {$i < $val(nn) } { incr i } {
 
 $ns_ at 0.0 "$node_([expr $val(nn)-1]) label Sink"
 
-Application/Traffic/CBR set packetSize_ 1023
-Application/Traffic/CBR set rate_ 256Kb
-
+set val(rate) [expr int(ceil($val(packetSize)*double($val(pps))/1000))]
+Application/Traffic/CBR set packetSize_ $val(packetSize)
+Application/Traffic/CBR set rate_ $val(rate)Kb
+# ============================================================
+# Info printing
+# ============================================================
+puts "Nodes             : $val(nn)"
+puts "Flow              : $val(flow)"
+puts "Packet per second : $val(pps)"
+puts "Speed             : $val(velocity)"
+# ========================================================
 # ========================================================
 # Number of sink calculating
 # ========================================================
@@ -207,7 +218,7 @@ for {set i 0} {$i < [expr $val(flow)]} {incr i} {
       set nodeStart 0
     }
     $ns_ connect $udp1($nodeStart) $null($con)
-    puts "connecting $nodeStart with $con"
+    #puts "connecting $nodeStart with $con"
     incr nodeStart ;
 }
 # =====================================================================
@@ -234,14 +245,22 @@ for {set i 5} {$i < [expr $val(ttime)-10]} {} {
 
 proc random_movement { length x y v} {
         global ns_ tracefd node_
-          set temp_x [expr int ($x*0.8)]
-          set temp_y [expr int ($y*0.8)]
-          puts "x $temp_x"
-          puts "y $temp_y"
         for {set i 0} {$i < [expr $length]} {incr i} {
 
-          set x_pos [expr int($temp_x*rand())] ;#random settings
-          set y_pos [expr int($temp_y*rand())] ;#random settings
+          set x_pos [expr int($x*rand())] ;#random settings
+          set y_pos [expr int($y*rand())] ;#random settings
+          if [expr $x_pos == $x] {
+             set x_pos [expr $x_pos-10];
+          }
+          if [expr $y_pos == $y] {
+             set y_pos [expr $y_pos-10];
+          }
+          if [expr $x_pos == 0] {
+             set x_pos [expr $x_pos+10];
+          }
+          if [expr $y_pos == 0] {
+             set y_pos [expr $y_pos+10];
+          }
 
           $node_($i) setdest $x_pos $y_pos $v
       
@@ -281,7 +300,7 @@ proc stop {} {
     global ns_ tracefd
     $ns_ flush-trace
     close $tracefd
-    exec nam 1305117_802_15.nam &
+    #exec nam 1305117_802_15.nam &
     exit 0
 }
 

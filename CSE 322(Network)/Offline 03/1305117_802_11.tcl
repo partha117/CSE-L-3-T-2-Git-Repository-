@@ -17,9 +17,12 @@ set val(col)             0
 set val(nn)              [lindex $argv 0]
 set val(flow)            [lindex $argv 1]
 set grid                 1
-set val(ttime)           100
+set val(ttime)           25
 set val(extraTime)       1
 set val(range)           [lindex $argv 2]
+set val(pps)             [lindex $argv 3]
+set val(packetSize)      128
+set val(rate)             0
 # ==========================================================================
 # Distance
 # ==========================================================================
@@ -176,8 +179,17 @@ for {set i 0} {$i < $val(nn) } { incr i } {
     }
 }
 
-Application/Traffic/CBR set packetSize_ 1023
-Application/Traffic/CBR set rate_ 256Kb
+set val(rate) [expr int(ceil($val(packetSize)*double($val(pps))/1000))]
+Application/Traffic/CBR set packetSize_ $val(packetSize)
+Application/Traffic/CBR set rate_ $val(rate)Kb
+
+# ============================================================
+# Info printing
+# ============================================================
+puts "Nodes : $val(nn)"
+puts "Flow : $val(flow)"
+puts "Packet per second : $val(pps)"
+puts "Range : $val(range)Tx"
 # ========================================================
 # Number of sink calculating
 # ========================================================
@@ -221,7 +233,7 @@ for {set i 0} {$i < [expr $val(flow)]} {incr i} {
       set nodeStart 0
     }
     $ns_ connect $udp1($nodeStart) $null($con)
-    puts "connecting $nodeStart with $con"
+    #puts "connecting $nodeStart with $con"
     incr nodeStart ;
 }
 
@@ -240,7 +252,7 @@ for {set i 0} {$i < $val(nn)  } { incr i} {
 
 for {set i 0} {$i < [expr $val(nn) -$nSink]} {incr i} {
     #set time [expr $i % 4]
-    $ns_ at 5.0 "$cbr1($i) start"
+    $ns_ at 0.1 "$cbr1($i) start"
 }
 
 
@@ -270,7 +282,7 @@ proc stop {} {
     global ns_ tracefd
     $ns_ flush-trace
     close $tracefd
-    exec nam 1305117_802_11.nam &
+    #exec nam 1305117_802_11.nam &
     exit 0
 }
 
