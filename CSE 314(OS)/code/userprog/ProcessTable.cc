@@ -7,12 +7,13 @@
 #include "ProcessTable.h"
 
 
-ProcessTable::ProcessTable(int size)
+ProcessTable::ProcessTable(int tableSize)
 {
-	map=new BitMap(size);
+	map=new BitMap(tableSize);
 	processTableLock=new Lock("ProcessTable");
-	entrySet=new Entry[size];
+	entrySet=new Entry[tableSize];
 	numProcess=0;
+	size=tableSize;
 }
 ProcessTable::~ProcessTable()
 {
@@ -27,6 +28,7 @@ int ProcessTable::Alloc(void *object)
 		entrySet[temp].space=object;
 		entrySet[temp].processId=temp;
 		numProcess++;
+		//printf("pTable alloc %d name %s\n",temp,((Thread*)(object))->getName());
 	}
 	processTableLock->Release();
 	return temp;
@@ -34,9 +36,9 @@ int ProcessTable::Alloc(void *object)
 void* ProcessTable::Get(int index)
 {
 	processTableLock->Acquire();
-	if(map->Test(index))
+	if((index>=0)&&(index<size)&&(map->Test(index)))
 	{
-		void *temp=entrySet->space;
+		void *temp=entrySet[index].space;
 		processTableLock->Release();
 		return temp;
 	}

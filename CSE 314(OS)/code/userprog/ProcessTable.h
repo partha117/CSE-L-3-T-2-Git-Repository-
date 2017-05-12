@@ -35,6 +35,7 @@ private:
 	BitMap* map;
 	Entry *entrySet;
 	int numProcess;
+	int size;
 
 };
 

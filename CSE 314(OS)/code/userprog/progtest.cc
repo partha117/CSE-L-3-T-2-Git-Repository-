@@ -46,6 +46,7 @@ StartProcess(char *filename)
     }
     space = new AddrSpace(executable);    
     currentThread->space = space;
+    currentThread->spaceId=pTable->Alloc(currentThread);
 
     delete executable;			// close file
 

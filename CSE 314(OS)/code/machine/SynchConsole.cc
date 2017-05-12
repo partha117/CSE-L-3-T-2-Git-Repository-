@@ -42,6 +42,10 @@ int SynchConsole::readConsole(char *buffer,int size)
 		}
 		else
 		{
+
+			temp=(int)(buffer+i);
+			machine->WriteMem(temp,1,'\n');
+			temp=(int)(buffer+i+1);
 			machine->WriteMem(temp,1,NULL);
 			consoleLock->Release();
 			return i+1;

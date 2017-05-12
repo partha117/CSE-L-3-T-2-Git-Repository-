@@ -103,6 +103,7 @@ void ExceptionHandler(ExceptionType which)
         int pid=(int)id;
         Thread *th=(Thread*)pTable->Get(id);
     	exceptionLock->Release();
+    	//printf("returned thread name %s %d\n",th->getName(),id);
         th->Fork(myFunction,pid);
         machine->WriteRegister(2,pid);
         IncPC();
@@ -185,17 +186,18 @@ void myExit(int status)
 
 	}
 	pTable->Release(currentThread->spaceId);
+	if(status==0)
+	{
+		printf("Process executed Successfully!!\n");
+	}
+	printf("Exit code %d\n",status);
 	if(pTable->getNumProcess()==0)
 	{
 		exceptionLock->Release();
 		interrupt->Halt();
 	}
 	exceptionLock->Release();
-	if(status==0)
-	{
-		printf("Process executed Successfully!!\n");
-	}
-	printf("Exit code %d\n",status);
+
 	currentThread->Finish();
 
 }

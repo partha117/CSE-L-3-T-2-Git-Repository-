@@ -11,7 +11,7 @@ main()
 {
     int result = 1000;
     char buffer[13];
+    Exec("../test/matmult");
     Write("Write Something: from nachos\n",29,0);
-    result = Exec("../test/matmult");
-    Exit(result);
+    Exit(0);
 }
