@@ -129,27 +129,45 @@ void ExceptionHandler(ExceptionType which)
 
 
     }
-
-    else {
-
-	printf("Unexpected user mode exception %d %d exception:", which, type);
-	if(which==AddressErrorException)
-	    	{
-	    		printf("Address error exception\n");
-	    	}
-	    	else if(which==PageFaultException)
-	    	{
-	    		printf("Page fault exception\n");
-	    	}
-	    	else if(which==BusErrorException)
-	    	{
-	    		printf("Bus error exception\n");
-	    	}
-	    	else if(which==ReadOnlyException)
-	    	{
-	    		printf("Read only exception\n");
-	    	}
-	ASSERT(FALSE);
+    else if(which==AddressErrorException)
+    {
+    	  printf("Address error exception\n");
+    	  myExit(which);
+    }
+    else if(which==PageFaultException)
+    {
+  		  printf("Page fault exception\n");
+  		  myExit(which);
+    }
+    else if(which==BusErrorException)
+    {
+    	  printf("Bus error exception\n");
+    	  myExit(which);
+    }
+    else if(which==ReadOnlyException)
+    {
+    	   printf("Read only exception\n");
+    	   myExit(which);
+    }
+    else if(which==NumExceptionTypes)
+    {
+           printf("Num Exception\n");
+           myExit(which);
+    }
+    else if(which==OverflowException)
+    {
+           printf("Overflow exception\n");
+           myExit(which);
+    }
+    else if(which==IllegalInstrException)
+    {
+        	printf("Illegal instruction exception\n");
+        	myExit(which);
+    }
+    else
+    {
+    	printf("Unexpected user mode exception %d %d exception:", which, type);
+    	ASSERT(FALSE);
     }
 
 }
@@ -178,7 +196,7 @@ void myExit(int status)
 
 	//printf("lock from there\n");
 	exceptionLock->Acquire();
-
+	machine->WriteRegister(2,status);
 	int ps=machine->pageTableSize;
 	for(int i=0;i<ps;i++)
 	{
@@ -186,11 +204,24 @@ void myExit(int status)
 
 	}
 	pTable->Release(currentThread->spaceId);
+//	char temp[30];
+//	temp[0]=0;
+//	char temp1[5];
+//	temp1[0]=0;
 	if(status==0)
 	{
-		printf("Process executed Successfully!!\n");
+		printf("PROCESS EXECUTED SUCCESSFULLY!!\n");
+//		strcpy(temp,"Process executed Successfully!!\n");
+//		Write(temp,33,0);
 	}
-	printf("Exit code %d\n",status);
+//	temp[0]=0;
+//	strcpy(temp,"Exit Code ");
+//	sprintf(temp1, "%d", status);
+//	strcat(temp,temp1);
+//	strcat(temp,"\n");
+//	Write(temp,15,0);
+	printf("EXIT CODE %d\n",status);
+
 	if(pTable->getNumProcess()==0)
 	{
 		exceptionLock->Release();
