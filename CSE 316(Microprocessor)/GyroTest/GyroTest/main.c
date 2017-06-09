@@ -53,6 +53,8 @@ int main(void)
 	uart_init();
 	stdout = &uart_output;
 	stdin  = &uart_input;
+	DDRB=0xFF;
+	PORTB=0x00;
 	xPos=playerPositionX;
 	yPos=playerPositionY;
 	int  tempX,tempY=0;
@@ -61,13 +63,50 @@ int main(void)
 		    calcPosition();
 			tempX=8-xPos;
 			tempY=8-yPos;
-			//printf("from here %d\n",yPos);
-			//if(checkCollision(tempX,tempY))
-			//{
-				//printf("from inside here %d\n",yPos);
+			
+			if(playerPositionX!=tempX)
+			{
+				printf("portb %d\n",PORTB);
+				if(PORTB&(1<<PB0))
+				{
+					PORTB=PORTB&(~(1<<PB0));
+					
+				}
+				else
+				{
+					PORTB=PORTB|(1<<PB0);
+				}
+				if(tempX>playerPositionX)
+				{
+					PORTB=PORTB&(~(1<<PB1));
+				}
+				else
+				{
+					PORTB=PORTB|(1<<PB0);
+				}
+			}
+			if(playerPositionY!=tempY)
+			{
+				if(PORTB&(1<<PB2))
+				{
+					PORTB=PORTB&(~(1<<PB2));
+				}
+				else
+				{
+					PORTB=PORTB|(1<<PB2);
+				}
+				if(tempY>playerPositionY)
+				{
+					PORTB=PORTB&(~(1<<PB3));
+				}
+				else
+				{
+					PORTB=PORTB|(1<<PB3);
+				}
 				playerPositionX=tempX;
 				playerPositionY=tempY;
-			//}
+			}
+			
 		printf("player X: %d Y: %d\n",playerPositionX,playerPositionY);
 			_delay_ms(500);
 			//drawMaze(maze);
@@ -77,22 +116,12 @@ int main(void)
 	}
 	
 }
-unsigned char checkCollision(int x,int y)
+unsigned char boundary(int val)
 {
-	unsigned char temp;
-	//printf("From chack collision x:%d y:%d\n",x,y);
-	if((x<16)&&(y<16))
+	if((val>=0)&&(val<16))
 	{
-		
-		temp=(maze[x]&&(1<<(y)));
-		//printf("iside1 maze %d temp %d\n",maze[x],temp);
-		if(temp)
-		{
-			//printf("iside2\n");
-			return 1;
-		}
+		return 1;
 	}
-	//printf("from maze %d\n",maze[x]);
 	return 0;
 }
 void calcPosition()
@@ -101,52 +130,41 @@ void calcPosition()
 	xVal=(ax/2048);
 	yVal=(ay/2048);
 	//printf(" yval %d ay %d\n",yVal,ay);
-	int tempX,tempY;
-	tempY=tempX=0;
 	if((xVal!=xPos)||(yVal!=yPos))
 	{
 		if(xVal>xPos)
 		{
-			xPos++;
-			tempX=8-xPos;
-			tempY=8-yPos;
-			if(!(checkCollision(tempX,tempY)))
-			{
-				xPos--;
-			}
-			//printf("Current x: %d xval %d\n",xPos,xVal);
-		}
-		else if(xVal<xPos)
-		{
-			xPos--;
-			tempX=8-xPos;
-			tempY=8-yPos;
-			if(!(checkCollision(tempX,tempY)))
+			
+			if(boundary(8-xPos-1))
 			{
 				xPos++;
 			}
 			//printf("Current x: %d xval %d\n",xPos,xVal);
 		}
+		else if(xVal<xPos)
+		{
+			
+			if(boundary(8-xPos+1))
+			{
+				xPos--;
+			}
+			//printf("Current x: %d xval %d\n",xPos,xVal);
+		}
 		if(yVal>yPos)
 		{
-			yPos++;
-			tempX=8-xPos;
-			tempY=8-yPos;
-			if(!(checkCollision(tempX,tempY)))
+			if(boundary(8-yPos-1))
 			{
-				yPos--;
+				yPos++;
 			}
 			//printf("Current : %d\n",yPos);
 		}
 		else if(yVal<yPos)
 		{
-			yPos--;
-			tempX=8-xPos;
-			tempY=8-yPos;
-			if(!(checkCollision(tempX,tempY)))
+			if(boundary(8-yPos+1))
 			{
-				yPos++;
+				yPos--;
 			}
+			
 			//printf("Current x: %d\n",yPos);
 		}
 		//printf("Current Position: X %d ::y %d\n",xPos,yPos);
